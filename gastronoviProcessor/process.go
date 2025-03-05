@@ -90,10 +90,16 @@ func extractTipAmounts(file *excelize.File) ([]*models.DailyTip, error) {
 		currentYear := time.Now().Year()
 		day = day.AddDate(currentYear-day.Year(), 0, 0)
 
-		tip, err := utils.ConvertCurrencyToNumber(tipString)
-		if err != nil {
-			return nil, fmt.Errorf("error converting tip at column %d: %w", col, err)
+		var tip float64
+		if tipString == "" {
+			tip = 0
+		} else {
+			tip, err = utils.ConvertCurrencyToNumber(tipString)
+			if err != nil {
+				return nil, fmt.Errorf("error converting tip at column %d: %w", col, err)
+			}
 		}
+
 		tipForPeriodPerDay = append(tipForPeriodPerDay, &models.DailyTip{
 			Date:      day,
 			TotalTips: tip,
