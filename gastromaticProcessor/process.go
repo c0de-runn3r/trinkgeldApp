@@ -33,7 +33,7 @@ func openGastromaticFile(name string) (*excelize.File, error) {
 		return nil, err
 	}
 
-	// jsut to be save that it was closed correctly
+	// just to be safe that it was closed correctly
 	defer func() error {
 		// Close the spreadsheet.
 		if err := f.Close(); err != nil {
@@ -114,9 +114,24 @@ func extractDailyWorkingTimesPerWorker(file *excelize.File) ([]*models.WorkShift
 						return nil, fmt.Errorf("error converting hours worked at row %d: %w", i, err)
 					}
 
+					// change location to locationID
+					var locationID string
+					switch location {
+					case "Campus":
+						locationID = models.CampusLocationID
+					case "Hopplo Nordend":
+						locationID = models.NordendLocationID
+					case "Altstadt":
+						locationID = models.AltstadtLocationID
+					case "HDL":
+						locationID = models.HdlLocationID
+					default:
+						return nil, fmt.Errorf("location %s is not recognized", location)
+					}
+
 					dailyWorkingTimesPerWorker = append(dailyWorkingTimesPerWorker, &models.WorkShift{
-						WorkerID:    worker,   // I use the worker name as the id of the worker
-						LocationID:  location, // I use the location name as the id of the location
+						WorkerID:    worker,     // I use the worker name as the id of the worker
+						LocationID:  locationID, // I use the location name as the id of the location
 						Date:        date,
 						HoursWorked: hoursWorked,
 					})

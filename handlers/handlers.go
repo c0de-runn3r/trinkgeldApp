@@ -7,6 +7,7 @@ import (
 	"os"
 	gastromaticprocessor "trinkgeldApp/gastromaticProcessor"
 	gastronoviprocessor "trinkgeldApp/gastronoviProcessor"
+	"trinkgeldApp/models"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pocketbase/pocketbase"
@@ -74,6 +75,13 @@ func (a *AppContext) SubmitGastronovi(c echo.Context) error {
 		})
 	}
 
+	location, err := getLocationFromRequest(c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
 	filePath, err := upload(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
@@ -88,7 +96,7 @@ func (a *AppContext) SubmitGastronovi(c echo.Context) error {
 		})
 	}
 
-	a.UploadTipsForPeriod(tips)
+	a.UploadTipsForPeriod(tips, location)
 
 	return c.JSON(http.StatusOK, map[string]bool{
 		"ok": true,
@@ -138,5 +146,22 @@ func checkFileType(c echo.Context) (string, error) {
 		return typeGastronoviReport, nil
 	default:
 		return "", fmt.Errorf("Invalid file type %s", fileType)
+	}
+}
+
+func getLocationFromRequest(c echo.Context) (string, error) {
+	location := c.FormValue("location")
+
+	switch location {
+	case models.AltstadtLocationID:
+		return models.AltstadtLocationID, nil
+	case models.CampusLocationID:
+		return models.CampusLocationID, nil
+	case models.NordendLocationID:
+		return models.NordendLocationID, nil
+	case models.HdlLocationID:
+		return models.HdlLocationID, nil
+	default:
+		return "", fmt.Errorf("Invalid location %s", location)
 	}
 }
