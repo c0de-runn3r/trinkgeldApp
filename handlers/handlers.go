@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"time"
 	gastromaticprocessor "trinkgeldApp/gastromaticProcessor"
 	gastronoviprocessor "trinkgeldApp/gastronoviProcessor"
 	"trinkgeldApp/models"
@@ -117,12 +119,17 @@ func upload(c echo.Context) (string, error) {
 	src, err := file.Open()
 	if err != nil {
 		return "", err
-
 	}
 	defer src.Close()
 
+	// Generate unique file name
+	timestamp := time.Now().Unix()
+	ext := filepath.Ext(file.Filename)
+	base := file.Filename[:len(file.Filename)-len(ext)]
+	uniqueFileName := fmt.Sprintf("%s_%d%s", base, timestamp, ext)
+
 	// Destination
-	dst, err := os.Create("./cache/" + file.Filename)
+	dst, err := os.Create("./cache/" + uniqueFileName)
 	if err != nil {
 		return "", err
 	}
@@ -133,7 +140,7 @@ func upload(c echo.Context) (string, error) {
 		return "", err
 	}
 
-	return "./cache/" + file.Filename, nil
+	return "./cache/" + uniqueFileName, nil
 }
 
 func checkFileType(c echo.Context) (string, error) {
