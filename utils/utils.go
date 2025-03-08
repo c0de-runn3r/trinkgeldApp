@@ -22,3 +22,16 @@ func ConvertCurrencyToNumber(input string) (float64, error) {
 
 	return value, nil
 }
+
+func GenerateWorkerID(workerName string) string {
+	// Remove whitespace
+	workerName = strings.TrimSpace(workerName)
+
+	// Convert to lowercase
+	workerName = strings.ToLower(workerName)
+
+	// Replace whitespace with underscore
+	workerName = strings.ReplaceAll(workerName, " ", "_")
+
+	return workerName
+}

@@ -130,8 +130,8 @@ func extractDailyWorkingTimesPerWorker(file *excelize.File) ([]*models.WorkShift
 					}
 
 					dailyWorkingTimesPerWorker = append(dailyWorkingTimesPerWorker, &models.WorkShift{
-						WorkerID:    worker,     // I use the worker name as the id of the worker
-						LocationID:  locationID, // I use the location name as the id of the location
+						WorkerID:    worker,
+						LocationID:  locationID,
 						Date:        date,
 						HoursWorked: hoursWorked,
 					})
