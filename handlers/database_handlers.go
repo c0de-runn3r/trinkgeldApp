@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
 	"log"
 	"reflect"
+	mainprocessor "trinkgeldApp/mainprocessor"
 	"trinkgeldApp/models"
 	"trinkgeldApp/utils"
 
@@ -108,4 +110,102 @@ func (a *AppContext) getOrCreateWorker(workerName string) (bool, error) {
 	}
 	log.Printf("New worker created with ID: %s", workerID)
 	return true, nil
+}
+
+func (a *AppContext) GetWorkShifts() ([]*models.WorkShift, error) {
+	collection, err := a.DB.FindCollectionByNameOrId("work_shifts")
+	if err != nil {
+		return nil, err
+	}
+
+	records, err := a.DB.FindAllRecords(collection)
+	if err != nil {
+		return nil, err
+	}
+
+	var workShifts []*models.WorkShift
+	for _, record := range records {
+		var shift models.WorkShift
+		data, err := record.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(data, &shift)
+		if err != nil {
+			return nil, err
+		}
+		workShifts = append(workShifts, &shift)
+	}
+
+	return workShifts, nil
+}
+
+func (a *AppContext) GetDailyTips() ([]*models.DailyTip, error) {
+	collection, err := a.DB.FindCollectionByNameOrId("daily_tips")
+	if err != nil {
+		return nil, err
+	}
+
+	records, err := a.DB.FindAllRecords(collection)
+	if err != nil {
+		return nil, err
+	}
+
+	var dailyTips []*models.DailyTip
+	for _, record := range records {
+		var tip models.DailyTip
+		data, err := record.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(data, &tip)
+		if err != nil {
+			return nil, err
+		}
+		dailyTips = append(dailyTips, &tip)
+	}
+	return dailyTips, nil
+}
+
+func (a *AppContext) UploadTipsForPeriodPerWorkerPerDay(tipsEarned []*models.WorkerTip) {
+	// Upload the calculated tips to the database
+	collection, err := a.DB.FindCollectionByNameOrId("worker_tips")
+	if err != nil {
+		log.Fatalf("Error finding collection: %v", err)
+	}
+
+	for _, tip := range tipsEarned {
+		record := core.NewRecord(collection)
+		record.Set("worker_id", tip.WorkerID)
+		record.Set("date", tip.Date)
+		record.Set("tips_earned", tip.TipsEarned)
+		record.Set("hours_worked", tip.HoursWorked)
+		record.Set("location_id", tip.LocationID)
+		err := a.DB.Save(record)
+		if err != nil {
+			log.Fatalf("Error saving record: %v", err)
+		}
+	}
+}
+
+func (a *AppContext) CheckDBandCalculateTips() {
+	// Get all the work shifts from the database
+	workShifts, err := a.GetWorkShifts()
+	if err != nil {
+		log.Fatalf("Error getting work shifts: %v", err)
+	}
+
+	// Get all the daily tips from the database
+	dailyTips, err := a.GetDailyTips()
+	if err != nil {
+		log.Fatalf("Error getting daily tips: %v", err)
+	}
+
+	tipsEarned, err := mainprocessor.CalculateTipAmountsPerWorkerPerDay(workShifts, dailyTips)
+	if err != nil {
+		log.Fatalf("Error calculating tips: %v", err)
+	}
+
+	// Upload the calculated tips to the database
+	a.UploadTipsForPeriodPerWorkerPerDay(tipsEarned)
 }

@@ -56,6 +56,9 @@ func (a *AppContext) SubmitGastromatic(c echo.Context) error {
 
 	a.UploadShiftsForPeriod(shifts)
 
+	// Check DB
+	a.CheckDBandCalculateTips()
+
 	return c.JSON(http.StatusOK, map[string]bool{
 		"ok": true,
 	})
@@ -100,10 +103,32 @@ func (a *AppContext) SubmitGastronovi(c echo.Context) error {
 
 	a.UploadTipsForPeriod(tips, location)
 
+	// Check DB
+	a.CheckDBandCalculateTips()
+
 	return c.JSON(http.StatusOK, map[string]bool{
 		"ok": true,
 	})
 
+}
+
+func (a *AppContext) GetTipsPerDay(c echo.Context) error {
+	tips, err := a.GetDailyTips()
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, tips)
+}
+
+func (a *AppContext) CalculateTips(c echo.Context) error {
+	a.CheckDBandCalculateTips()
+
+	return c.JSON(http.StatusOK, map[string]bool{
+		"ok": true,
+	})
 }
 
 // Returns the file name and type

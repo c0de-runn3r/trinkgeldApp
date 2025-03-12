@@ -22,6 +22,8 @@ func InitializeEchoServer(h *handlers.AppContext) *echo.Echo {
 
 	api.POST("/submit-gastromatic-report", h.SubmitGastromatic)
 	api.POST("/submit-gastronovi-report", h.SubmitGastronovi)
+	api.GET("/get-tips-per-day", h.GetTipsPerDay)
+	api.GET("/calculate-tips", h.CalculateTips)
 
 	return e
 }
