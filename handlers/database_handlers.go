@@ -8,6 +8,7 @@ import (
 	"trinkgeldApp/models"
 	"trinkgeldApp/utils"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -168,24 +169,39 @@ func (a *AppContext) GetDailyTips() ([]*models.DailyTip, error) {
 }
 
 func (a *AppContext) UploadTipsForPeriodPerWorkerPerDay(tipsEarned []*models.WorkerTip) {
-	// Upload the calculated tips to the database
-	collection, err := a.DB.FindCollectionByNameOrId("worker_tips")
-	if err != nil {
-		log.Fatalf("Error finding collection: %v", err)
-	}
 
 	for _, tip := range tipsEarned {
-		record := core.NewRecord(collection)
+
+		var record *core.Record
+
+		// Check if a record with the same worker_id and date already exists
+		existingRecords, err := a.DB.FindAllRecords("worker_tips", dbx.HashExp{"worker_id": tip.WorkerID, "date": tip.Date, "location_id": tip.LocationID})
+		if err != nil && err.Error() != "sql: no rows in result set" {
+			log.Fatalf("Error during the search looking into worker_tips: %v", err)
+		}
+
+		switch len(existingRecords) {
+		case 0:
+			record = nil
+		case 1:
+			record = existingRecords[0]
+		default:
+			log.Fatalf("Error: multiple records found for worker_id: %s, date: %s", tip.WorkerID, tip.Date)
+		}
+
 		record.Set("worker_id", tip.WorkerID)
 		record.Set("date", tip.Date)
 		record.Set("tips_earned", tip.TipsEarned)
 		record.Set("hours_worked", tip.HoursWorked)
 		record.Set("location_id", tip.LocationID)
-		err := a.DB.Save(record)
+
+		err = a.DB.Save(record)
 		if err != nil {
 			log.Fatalf("Error saving record: %v", err)
 		}
+
 	}
+
 }
 
 func (a *AppContext) CheckDBandCalculateTips() {
