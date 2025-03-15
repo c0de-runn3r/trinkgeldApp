@@ -13,7 +13,7 @@ func TestProcessGastronoviFile(t *testing.T) {
 			t.Errorf("Error while processing the file: %v", err)
 		} else {
 			for _, tip := range tips {
-				fmt.Printf("Date: %s, TotalTips: %.2f\n", tip.Date.Format("02.01.2006"), tip.TotalTips)
+				fmt.Printf("Date: %s, TotalTips: %.2f\n", tip.Date, tip.TotalTips)
 			}
 		}
 		if len(tips) == 0 {

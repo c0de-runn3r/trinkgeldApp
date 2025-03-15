@@ -13,7 +13,7 @@ func TestProcessGastromaticFile(t *testing.T) {
 			t.Errorf("Error while processing the file: %v", err)
 		} else {
 			for _, workingTime := range workingTimes {
-				fmt.Printf("Worker: %s, Date: %s, WorkingTime: %.2f, Location: %s\n", workingTime.WorkerID, workingTime.Date.Format("02.01.2006"), workingTime.HoursWorked, workingTime.LocationID)
+				fmt.Printf("Worker: %s, Date: %s, WorkingTime: %.2f, Location: %s\n", workingTime.WorkerID, workingTime.Date, workingTime.HoursWorked, workingTime.LocationID)
 			}
 		}
 		if len(workingTimes) == 0 {

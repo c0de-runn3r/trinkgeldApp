@@ -1,7 +1,6 @@
 package models
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -34,7 +33,7 @@ type WorkShift struct {
 	ID          string    `json:"id"`
 	WorkerID    string    `json:"worker_id"`
 	LocationID  string    `json:"location_id"`
-	Date        time.Time `json:"date"`
+	Date        string    `json:"date"`
 	HoursWorked float64   `json:"hours_worked"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -44,7 +43,7 @@ type WorkShift struct {
 type DailyTip struct {
 	ID         string    `json:"id"`
 	LocationID string    `json:"location_id"`
-	Date       time.Time `json:"date"`
+	Date       string    `json:"date"`
 	TotalTips  float64   `json:"total_tips"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
@@ -55,7 +54,7 @@ type WorkerTip struct {
 	ID          string    `json:"id"`
 	WorkerID    string    `json:"worker_id"`
 	LocationID  string    `json:"location_id"`
-	Date        time.Time `json:"date"`
+	Date        string    `json:"date"`
 	HoursWorked float64   `json:"hours_worked"`
 	TipsEarned  float64   `json:"tips_earned"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -74,48 +73,48 @@ type MonthlySummary struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-// UnmarshalJSON customizes the JSON unmarshaling of DailyTip
-func (d *DailyTip) UnmarshalJSON(data []byte) error {
-	type Alias DailyTip
-	aux := &struct {
-		Date string `json:"date"`
-		*Alias
-	}{
-		Alias: (*Alias)(d),
-	}
+// // UnmarshalJSON customizes the JSON unmarshaling of DailyTip
+// func (d *DailyTip) UnmarshalJSON(data []byte) error {
+// 	type Alias DailyTip
+// 	aux := &struct {
+// 		Date string `json:"date"`
+// 		*Alias
+// 	}{
+// 		Alias: (*Alias)(d),
+// 	}
 
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
+// 	if err := json.Unmarshal(data, &aux); err != nil {
+// 		return err
+// 	}
 
-	// Parse the date string to time.Time, handling the specific format
-	parsedDate, err := time.Parse("2006-01-02 15:04:05.000Z", aux.Date)
-	if err != nil {
-		return err
-	}
-	d.Date = parsedDate
-	return nil
-}
+// 	// Parse the date string to time.Time, handling the specific format
+// 	parsedDate, err := time.Parse("2006-01-02 15:04:05.000Z", aux.Date)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	d.Date = parsedDate
+// 	return nil
+// }
 
-// UnmarshalJSON customizes the JSON unmarshaling of WorkShift
-func (w *WorkShift) UnmarshalJSON(data []byte) error {
-	type Alias WorkShift
-	aux := &struct {
-		Date string `json:"date"`
-		*Alias
-	}{
-		Alias: (*Alias)(w),
-	}
+// // UnmarshalJSON customizes the JSON unmarshaling of WorkShift
+// func (w *WorkShift) UnmarshalJSON(data []byte) error {
+// 	type Alias WorkShift
+// 	aux := &struct {
+// 		Date string `json:"date"`
+// 		*Alias
+// 	}{
+// 		Alias: (*Alias)(w),
+// 	}
 
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
+// 	if err := json.Unmarshal(data, &aux); err != nil {
+// 		return err
+// 	}
 
-	// Parse the date string to time.Time, handling the specific format
-	parsedDate, err := time.Parse("2006-01-02 15:04:05.000Z", aux.Date)
-	if err != nil {
-		return err
-	}
-	w.Date = parsedDate
-	return nil
-}
+// 	// Parse the date string to time.Time, handling the specific format
+// 	parsedDate, err := time.Parse("2006-01-02 15:04:05.000Z", aux.Date)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	w.Date = parsedDate
+// 	return nil
+// }

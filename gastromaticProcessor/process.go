@@ -3,14 +3,9 @@ package gastromaticprocessor
 import (
 	"fmt"
 	"strconv"
-	"time"
 	"trinkgeldApp/models"
 
 	"github.com/xuri/excelize/v2"
-)
-
-const (
-	GastromaticDateLayout = "02.01.2006" // to parse the date without the weekday
 )
 
 func ProcessGastromaticFile(name string) ([]*models.WorkShift, error) {
@@ -102,12 +97,6 @@ func extractDailyWorkingTimesPerWorker(file *excelize.File) ([]*models.WorkShift
 						dateString = dateString[3:]
 					}
 
-					// Convert dateString to time.Time
-					date, err := time.Parse(GastromaticDateLayout, dateString)
-					if err != nil {
-						return nil, fmt.Errorf("error parsing date at row %d: %w", i, err)
-					}
-
 					// Convert hoursWorked to float64
 					hoursWorked, err := strconv.ParseFloat(hoursWorkedString, 64)
 					if err != nil {
@@ -132,7 +121,7 @@ func extractDailyWorkingTimesPerWorker(file *excelize.File) ([]*models.WorkShift
 					dailyWorkingTimesPerWorker = append(dailyWorkingTimesPerWorker, &models.WorkShift{
 						WorkerID:    worker,
 						LocationID:  locationID,
-						Date:        date,
+						Date:        dateString,
 						HoursWorked: hoursWorked,
 					})
 				}

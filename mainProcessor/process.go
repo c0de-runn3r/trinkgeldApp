@@ -3,7 +3,6 @@ package mainprocessor
 import (
 	"log"
 	"math"
-	"time"
 	"trinkgeldApp/models"
 )
 
@@ -19,17 +18,16 @@ func CalculateTipAmountsPerWorkerPerDay(shifts []*models.WorkShift, dailyTips []
 	tipsEarned := make([]*models.WorkerTip, 0)
 
 	// Group shifts by date
-	shiftsByDate := make(map[time.Time][]*models.WorkShift)
+	shiftsByDate := make(map[string][]*models.WorkShift)
 	for _, shift := range shifts {
-		date := shift.Date.Truncate(24 * time.Hour)
-		shiftsByDate[date] = append(shiftsByDate[date], shift)
+		shiftsByDate[shift.Date] = append(shiftsByDate[shift.Date], shift)
 	}
 
 	// Iterate through each day
 	for date, dailyShifts := range shiftsByDate {
 		var dailyTip *models.DailyTip
 		for _, tip := range dailyTips {
-			if tip.Date.Truncate(24 * time.Hour).Equal(date) {
+			if tip.Date == date {
 				dailyTip = tip
 				break
 			}

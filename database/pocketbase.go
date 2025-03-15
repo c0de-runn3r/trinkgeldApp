@@ -8,6 +8,7 @@ import (
 )
 
 func InitializePocketBase() *pocketbase.PocketBase {
+
 	app := pocketbase.New()
 
 	app.OnServe().BindFunc(func(event *core.ServeEvent) error {

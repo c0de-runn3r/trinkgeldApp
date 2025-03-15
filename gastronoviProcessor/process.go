@@ -2,6 +2,7 @@ package gastronoviprocessor
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 	"trinkgeldApp/models"
 	"trinkgeldApp/utils"
@@ -81,14 +82,9 @@ func extractTipAmounts(file *excelize.File) ([]*models.DailyTip, error) {
 		dayString := raws[0][col]
 		tipString := raws[5][col]
 
-		day, err := time.Parse(GastronoviDateLayout, dayString)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing date at column %d: %w", col, err)
-		}
-
 		// Set the year to the current year
-		currentYear := time.Now().Year()
-		day = day.AddDate(currentYear-day.Year(), 0, 0)
+		currentYear := strconv.Itoa(time.Now().Year())
+		day := dayString + currentYear
 
 		var tip float64
 		if tipString == "" {

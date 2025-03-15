@@ -9,6 +9,8 @@ require (
 	github.com/pocketbase/pocketbase v0.25.8
 )
 
+require go.uber.org/multierr v1.11.0 // indirect
+
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.36.1 // indirect
@@ -60,6 +62,7 @@ require (
 	github.com/xuri/excelize/v2 v2.9.0 // indirect
 	github.com/xuri/nfp v0.0.0-20240318013403-ab9948c2c4a7 // indirect
 	go.opencensus.io v0.24.0 // indirect
+	go.uber.org/zap v1.27.0
 	gocloud.dev v0.40.0 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/exp v0.0.0-20230315142452-642cacee5cc0 // indirect
