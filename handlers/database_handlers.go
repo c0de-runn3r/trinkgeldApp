@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"log"
-	"reflect"
 	mainprocessor "trinkgeldApp/mainprocessor"
 	"trinkgeldApp/models"
 	"trinkgeldApp/utils"
@@ -14,7 +13,7 @@ import (
 
 func (a *AppContext) UploadShiftsForPeriod(shifts []*models.WorkShift) {
 	// Upload the shifts to the database
-	collection, err := a.DB.FindCollectionByNameOrId("work_shifts")
+	collection, err := a.DB.FindCollectionByNameOrId(models.WorkShiftCollection)
 	if err != nil {
 		log.Fatalf("Error finding collection: %v", err)
 	}
@@ -34,14 +33,28 @@ func (a *AppContext) UploadShiftsForPeriod(shifts []*models.WorkShift) {
 		// before we receive worker name, we need to generate worker ID and assign it to the shift
 		shift.WorkerID = utils.GenerateWorkerID(shift.WorkerID)
 
-		record := core.NewRecord(collection)
-		val := reflect.ValueOf(shift).Elem()
-		for i := 0; i < val.NumField(); i++ {
-			field := val.Type().Field(i)
-			fieldName := field.Tag.Get("json")
-			fieldValue := val.Field(i).Interface()
-			record.Set(fieldName, fieldValue)
+		exsistingShift, err := a.DB.FindAllRecords(models.WorkShiftCollection, dbx.HashExp{"worker_id": shift.WorkerID, "date": shift.Date, "location_id": shift.LocationID})
+		if err != nil && err.Error() != "sql: no rows in result set" {
+			log.Fatalf("Error during the search looking into work_shifts: %v", err)
 		}
+
+		switch len(exsistingShift) {
+		case 0:
+			// do nothing
+		case 1:
+			log.Printf("Shift already exists, updating the record")
+			shift.ID = exsistingShift[0].Id
+		default:
+			log.Fatalf("Error: multiple records found for worker_id: %s, date: %s", shift.WorkerID, shift.Date)
+		}
+
+		record := core.NewRecord(collection)
+		record.Set("id", shift.ID)
+		record.Set("worker_id", shift.WorkerID)
+		record.Set("location_id", shift.LocationID)
+		record.Set("date", shift.Date)
+		record.Set("hours_worked", shift.HoursWorked)
+
 		err = a.DB.Save(record)
 		if err != nil {
 			log.Fatalf("Error saving record: %v", err)
@@ -52,27 +65,37 @@ func (a *AppContext) UploadShiftsForPeriod(shifts []*models.WorkShift) {
 
 func (a *AppContext) UploadTipsForPeriod(tips []*models.DailyTip, location string) {
 	// Upload the tips to the database
-	collection, err := a.DB.FindCollectionByNameOrId("daily_tips")
+	collection, err := a.DB.FindCollectionByNameOrId(models.DailyTipCollection)
 	if err != nil {
 		log.Fatalf("Error finding collection: %v", err)
 	}
 
 	// TODO can use marshalling instead of reflection
 	for _, tip := range tips {
-		log.Println(tip)
-		record := core.NewRecord(collection)
-		val := reflect.ValueOf(tip).Elem()
-		for i := 0; i < val.NumField(); i++ {
-			field := val.Type().Field(i)
-			fieldName := field.Tag.Get("json")
-			fieldValue := val.Field(i).Interface()
-			record.Set(fieldName, fieldValue)
+
+		tipExists, err := a.DB.FindAllRecords(models.DailyTipCollection, dbx.HashExp{"date": tip.Date, "location_id": location})
+		if err != nil && err.Error() != "sql: no rows in result set" {
+			log.Fatalf("Error during the search looking into daily_tips: %v", err)
 		}
-		// Set the location_id field with the location variable
-		record.Set("location_id", location)
-		err := a.DB.Save(record)
-		if err != nil {
-			log.Fatalf("Error saving record: %v", err)
+
+		switch len(tipExists) {
+		case 0:
+			// do nothing
+		case 1:
+			log.Printf("Tip already exists, updating the record")
+			tip.ID = tipExists[0].Id
+		default:
+			log.Fatalf("Error: multiple records found for date: %s", tip.Date)
+
+			record := core.NewRecord(collection)
+			record.Set("id", tip.ID)
+			record.Set("date", tip.Date)
+			record.Set("total_tips", tip.TotalTips)
+			record.Set("location_id", location)
+			err := a.DB.Save(record)
+			if err != nil {
+				log.Fatalf("Error saving record: %v", err)
+			}
 		}
 	}
 }
@@ -81,7 +104,7 @@ func (a *AppContext) getOrCreateWorker(workerName string) (bool, error) {
 	workerID := utils.GenerateWorkerID(workerName)
 
 	// Check if the worker already exists in the database
-	collection, err := a.DB.FindCollectionByNameOrId("workers")
+	collection, err := a.DB.FindCollectionByNameOrId(models.WorkerCollection)
 	if err != nil {
 		log.Printf("Error finding collection: %v", err)
 		return false, err
@@ -114,7 +137,7 @@ func (a *AppContext) getOrCreateWorker(workerName string) (bool, error) {
 }
 
 func (a *AppContext) GetWorkShifts() ([]*models.WorkShift, error) {
-	collection, err := a.DB.FindCollectionByNameOrId("work_shifts")
+	collection, err := a.DB.FindCollectionByNameOrId(models.WorkShiftCollection)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +165,7 @@ func (a *AppContext) GetWorkShifts() ([]*models.WorkShift, error) {
 }
 
 func (a *AppContext) GetDailyTips() ([]*models.DailyTip, error) {
-	collection, err := a.DB.FindCollectionByNameOrId("daily_tips")
+	collection, err := a.DB.FindCollectionByNameOrId(models.DailyTipCollection)
 	if err != nil {
 		return nil, err
 	}
@@ -170,12 +193,17 @@ func (a *AppContext) GetDailyTips() ([]*models.DailyTip, error) {
 
 func (a *AppContext) UploadTipsForPeriodPerWorkerPerDay(tipsEarned []*models.WorkerTip) {
 
+	collection, err := a.DB.FindCollectionByNameOrId(models.WorkerTipCollection)
+	if err != nil {
+		log.Fatalf("Error finding collection: %v", err)
+	}
+
 	for _, tip := range tipsEarned {
 
-		var record *core.Record
+		record := core.NewRecord(collection)
 
 		// Check if a record with the same worker_id and date already exists
-		existingRecords, err := a.DB.FindAllRecords("worker_tips", dbx.HashExp{"worker_id": tip.WorkerID, "date": tip.Date, "location_id": tip.LocationID})
+		existingRecords, err := a.DB.FindAllRecords(models.WorkerTipCollection, dbx.HashExp{"worker_id": tip.WorkerID, "date": tip.Date, "location_id": tip.LocationID})
 		if err != nil && err.Error() != "sql: no rows in result set" {
 			log.Fatalf("Error during the search looking into worker_tips: %v", err)
 		}
